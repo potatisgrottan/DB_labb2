@@ -1,4 +1,4 @@
-# Labb 1
+# Labb 2
 
 ## Beskrivning
 Databasteknik
@@ -8,10 +8,12 @@ Databasteknik
 - JDBC
 - Maven
 - Git
+- MongoDB
 
 ## Miljö
 - macOS / Windows
 - IntelliJ Community Edition
+- MongoDB Compass
 
 ### Miljövariabler
 
