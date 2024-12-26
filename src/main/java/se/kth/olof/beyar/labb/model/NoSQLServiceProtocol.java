@@ -1,17 +1,13 @@
 package se.kth.olof.beyar.labb.model;
 
-import com.mongodb.ConnectionString;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import se.kth.olof.beyar.labb.protocol.DBServiceProtocol;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class NoSQLServiceProtocol implements DBServiceProtocol
