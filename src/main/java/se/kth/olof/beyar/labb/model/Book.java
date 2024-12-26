@@ -72,6 +72,10 @@ public class Book
      * Joins multiple authors in array into one single string,
      * joined by a comma. This method is used for presentation purposes
      */
+    public ArrayList<Author> getAuthors(){
+        return new ArrayList<>(authors);
+    }
+
     public String getAuthorsJoined()
     {
         StringBuilder authorsJoined = new StringBuilder();
@@ -138,6 +142,12 @@ public class Book
         }
 
         return genreString.toString();
+    }
+
+    public ArrayList<String> getGenresList(){return new ArrayList<>(listGenre);}
+
+    public void addGenre(String genre){
+        listGenre.add(genre);
     }
 
     @Override

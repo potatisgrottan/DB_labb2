@@ -121,7 +121,10 @@ public class AddController
         String bookISBN = view.getAuthorBookISBN().getText();
 
         author = new Author(name, ssn);
-        author.addBook(bookISBN);
+        //search for book by isbn
+        // omvandla till book
+
+       // author.addBook(bookISBN);// add created book
         System.out.println(name + ", " + ssn + ", " + bookISBN);
 
         if (author.getSSN().isEmpty())
@@ -131,7 +134,7 @@ public class AddController
 
         try
         {
-            databaseService.insertAuthorTransaktion(author);
+            databaseService.insertAuthorTransaktion(author, bookISBN);
         } catch (SQLException e)
         {
             throw new BooksDBException(e);
@@ -151,6 +154,7 @@ public class AddController
         Author a = new Author(name, ssn);
         Book b = new Book(title, genre, isbn, grade);
         b.addAuthor(a);
+        a.addBook(b);
 
         if (b.getIsbn().isEmpty())
         {

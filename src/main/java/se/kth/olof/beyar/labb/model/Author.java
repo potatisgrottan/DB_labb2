@@ -10,7 +10,7 @@ public class Author
 {
     private final String name;
     private String ssn;
-    private final ArrayList<String> written;
+    private final ArrayList<Book> written;
 
     /** * Constructs an Author with the specified first name, last name,and SSN.
      * @param name the full name of the author
@@ -25,11 +25,11 @@ public class Author
 
     /**
      * Adds a book to the list of books written by the author.
-     * @param isbn the book to be added
+     * @param book the book to be added
      *  */
-    public void addBook(String isbn)
+    public void addBook(Book book)
     {
-        written.add(isbn);
+        written.add(book);
     }
 
     /**
@@ -48,8 +48,8 @@ public class Author
         return ssn;
     }
 
-    public ArrayList<String> getBooks() {
-        return written;
+    public ArrayList<Book> getBooks() {
+        return new ArrayList<>(written);
     }
 
     /**
