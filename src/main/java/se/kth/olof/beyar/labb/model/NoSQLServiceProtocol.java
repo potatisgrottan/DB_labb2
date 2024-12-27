@@ -37,18 +37,17 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
             String ssn = author.getString("SSN");
             Author bookAuthor = new Author(name, ssn);
 
+            @SuppressWarnings("unchecked")
             List<Document> booksDocuments = (List<Document>) author.get("Books");
-            if (booksDocuments != null) {
-                for (Document bookDoc : booksDocuments) {
-                    Book book = new Book(
-                            bookDoc.getString("Title"),
-                            bookDoc.getString("Genre"),
-                            bookDoc.getString("ISBN"),
-                            bookDoc.getString("Grade")
-                    );
-                    book.addAuthor(bookAuthor);
-                    booksByAuthor.add(book);
-                }
+            for (Document bookDocument : booksDocuments) {
+                Book book = new Book(
+                        bookDocument.getString("Title"),
+                        bookDocument.get("Genre").toString(),
+                        bookDocument.getString("ISBN"),
+                        bookDocument.getString("Grade")
+                );
+                book.addAuthor(bookAuthor);
+                booksByAuthor.add(book);
             }
         }
 
