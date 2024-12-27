@@ -8,56 +8,47 @@ import se.kth.olof.beyar.labb.protocol.DBServiceProtocol;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static com.mongodb.client.model.Filters.eq;
 
 public class NoSQLServiceProtocol implements DBServiceProtocol
 {
     MongoDatabase databaseConnection;
+    private final MongoClient client;
 
-    public NoSQLServiceProtocol(MongoDatabase databaseConnection)
+    public NoSQLServiceProtocol(MongoDatabase databaseConnection, MongoClient client)
     {
         this.databaseConnection = databaseConnection;
+        this.client = client;
     }
 
     @Override
-    public ArrayList<Book> findByAuthor(String query) throws SQLException
+    public ArrayList<Book> findByAuthor(String query)
     {
-         /*
-         {
-        "name": ...,
-        "SSN": ...,
-        "Books": [
-            {
-                "Title": ...,
-                "ISBN": ...,
-                "Genre": ...,
-                "Grade": ...,
-            },
-            ...
-        ]
-        },
-        */
         MongoCollection<Document> authors = databaseConnection.getCollection("Authors");
         Bson filter = Filters.regex("name", query, "i");
         FindIterable<Document> result = authors.find(filter);
 
         ArrayList<Book> booksByAuthor = new ArrayList<>();
-        for (Document author : result)
-        {
+        for (Document author : result) {
             String name = author.getString("name");
             String ssn = author.getString("SSN");
             Author bookAuthor = new Author(name, ssn);
 
             List<Document> booksDocuments = (List<Document>) author.get("Books");
-            for (Document bookDoc : booksDocuments) {
-                Book book = new Book(
-                        bookDoc.getString("Title"),
-                        bookDoc.getString("Genre"),
-                        bookDoc.getString("ISBN"),
-                        bookDoc.getString("Grade")
-                );
-                book.addAuthor(bookAuthor);
-                booksByAuthor.add(book);
+            if (booksDocuments != null) {
+                for (Document bookDoc : booksDocuments) {
+                    Book book = new Book(
+                            bookDoc.getString("Title"),
+                            bookDoc.getString("Genre"),
+                            bookDoc.getString("ISBN"),
+                            bookDoc.getString("Grade")
+                    );
+                    book.addAuthor(bookAuthor);
+                    booksByAuthor.add(book);
+                }
             }
         }
 
@@ -65,13 +56,13 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
     }
 
     @Override
-    public ArrayList<Book> findByISBN(String query) throws SQLException
+    public ArrayList<Book> findByISBN(String query)
     {
         return getBookByQuery(query, "ISBN");
     }
 
     @Override
-    public ArrayList<Book> findByTitle(String query) throws SQLException
+    public ArrayList<Book> findByTitle(String query)
     {
         return getBookByQuery(query, "Title");
     }
@@ -83,118 +74,189 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
     }
 
     @Override
-    public ArrayList<Book> findByRating(String query) throws SQLException
+    public ArrayList<Book> findByRating(String query)
     {
         return getBookByQuery(query, "Grade");
     }
 
     @Override
-    public void insertBook(Book book) throws SQLException
+    public void insertBook(Book book)
     {
-        /*
+        Document bookDocument = new Document();
+        bookDocument
+                .append("Title", book.getTitle())
+                .append("ISBN", book.getIsbn())
+                .append("Genres", Arrays.asList(book.getGenres().split("\\s*,\\s*")))
+                .append("Grade", book.getGrade());
+
+        List<Document> authorDocs = new ArrayList<>();
+        for (Author author : book.getAuthors())
         {
-            "Title": book.getTitle(),
-            "ISBN": book.getIsbn(),
-            "Genres": book.getGenres(),
-            "Grade": book.getGrade(),
-            "Authors": book.getAuthors();
-        },
-        */
+            Document authorDoc = new Document()
+                    .append("name", author.getName())
+                    .append("SSN", author.getSSN());
+
+            authorDocs.add(authorDoc);
+        }
+        bookDocument.append("Authors", authorDocs);
+
+        MongoCollection<Document> books = databaseConnection.getCollection("Books");
+        books.insertOne(bookDocument);
     }
 
     @Override
-    public void insertAuthor(Author author) throws SQLException
+    public void insertAuthor(Author author)
     {
         Document authorInsert = new Document("name", author.getName());
         authorInsert.append("SSN", author.getSSN());
-        authorInsert.append("books",author.getBooks());
+
+        List<Document> booksDocuments = new ArrayList<>();
+        for (Book book : author.getBooks()) {
+            booksDocuments.add(
+                new Document("Title", book.getTitle())
+                        .append("ISBN", book.getIsbn())
+                        .append("Genre", book.getGenres())
+                        .append("Grade", book.getGrade())
+            );
+        }
+
+        authorInsert.append("Books", booksDocuments);
 
         MongoCollection<Document> authors = databaseConnection.getCollection("Authors");
         authors.insertOne(authorInsert);
     }
 
-    //TODO gör till privat metod hos MySQLServiceProtocol
     @Override
-    public void insertWrittenBy(String bookISBN, String authorSSN) throws SQLException
+    public void insertWrittenBy(String bookISBN, String authorSSN) throws IllegalStateException
     {
-        // insert
+        Book book = findByISBN(bookISBN).getFirst();
+
+        MongoCollection<Document> authors = databaseConnection.getCollection("Authors");
+        Document author = authors.find(eq("SSN", authorSSN)).first();
+
+        Author newAuthor = null;
+        if (author != null)
+        {
+            newAuthor = new Author(author.getString("name"), authorSSN);
+        } else
+        {
+            throw new IllegalStateException("No author found");
+        }
+
+        Document bookDocument = new Document()
+                .append("Title", book.getTitle())
+                .append("ISBN", book.getIsbn())
+                .append("Genres", Arrays.asList(book.getGenres().split("\\s*,\\s*")))
+                .append("Grade", book.getGrade());
+
+        Document authorDocument = new Document()
+                .append("name", newAuthor.getName())
+                .append("SSN", newAuthor.getSSN());
+
+        Document addBookToAuthorUpdate = new Document("$push", new Document("Books", bookDocument));
+        Document addAuthorToBookUpdate = new Document("$push", new Document("Authors", authorDocument));
+
+        Document bookFilter = new Document("ISBN", bookISBN);
+        MongoCollection<Document> books = databaseConnection.getCollection("Books");
+        books.updateOne(bookFilter, addAuthorToBookUpdate);
+
+        Document authorFilter = new Document("SSN", authorSSN);
+        authors.updateOne(authorFilter, addBookToAuthorUpdate);
     }
 
     @Override
-    public void insertBookByAuthor(Author author, Book book) throws SQLException
+    public void insertBookByAuthor(Author author, Book book)
     {
         insertAuthor(author);
         insertBook(book);
     }
 
     @Override
-    public void insertBookTransaktion(Book book, String author) throws SQLException
+    public void insertBookUpdateAuthor(Book book, String authorSSN)
     {
-        //Find author/s
-        //if author/s exist{
-        //create author
-        // add author to written list in book
-        //Insert book doc}
-        //else cant do the insert
+        MongoCollection<Document> booksCollection = databaseConnection.getCollection("Books");
+        MongoCollection<Document> authorsCollection = databaseConnection.getCollection("Authors");
 
-        ArrayList<Book> list = findByAuthor(author);
-        book.addAuthor(list.getFirst().getAuthors().getFirst());
-        insertBook(book);
+        List<Document> authorsList = new ArrayList<>();
+        for (Author author : book.getAuthors())
+        {
+            authorsList.add(
+                    new Document()
+                            .append("name", author.getName())
+                            .append("SSN", author.getSSN())
+            );
+        }
 
-        //try{findByAuthor(author))
-        //newAuthor = get everything from author doc (name,ssn)
-        //book.addAuthor(newAuthor);
-        //insertBook(book);
-        //}catch(Exception e){
-        //throw new Exception(e);
-        //}
+        Document newBook = new Document()
+                .append("Title", book.getTitle())
+                .append("ISBN", book.getIsbn())
+                .append("Genres", Arrays.asList(book.getGenres().split(",")))
+                .append("Grade", book.getGrade())
+                .append("Authors", authorsList);
+
+        booksCollection.insertOne(newBook);
+
+        Document newBookForAuthor = new Document()
+                .append("Title", book.getTitle())
+                .append("ISBN", book.getIsbn())
+                .append("Genre", book.getGenres())
+                .append("Grade", book.getGrade());
+
+        authorsCollection.updateOne(
+                eq("SSN", authorSSN),
+                new Document("$push", new Document("Books", newBookForAuthor))
+        );
     }
 
     @Override
-    public void insertAuthorTransaktion(Author author,String bookISBN) throws SQLException
+    public void insertAuthorUpdateBook(Author author, String bookISBN) throws SQLException
     {
-        //Find book/s
-        //if book/s exist{
-        //create book/s
-        // add book/s to written list in author
-        //Insert author doc }
-        //else cant do the insert
+        MongoCollection<Document> authorsCollection = databaseConnection.getCollection("Authors");
+        MongoCollection<Document> booksCollection = databaseConnection.getCollection("Books");
 
-        ArrayList<Book> list = findByISBN(bookISBN);
-        author.addBook(list.getFirst());
-        insertAuthor(author);
+        Document newAuthor = new Document()
+                .append("name", author.getName())
+                .append("SSN", author.getSSN())
+                .append("Books", new ArrayList<>());
 
-        //try{findByISBN(bookISBN).size() == 1)
-        //newBook = get everything from book doc (title,genre,grade,isbn)
-        //author.addBook(newBook);
-        //insertAuthor(author);
-        //}catch(Exception e){
-        //throw new Exception(e);
-        //}
+        authorsCollection.insertOne(newAuthor);
+
+        Document bookDocument = booksCollection.find(eq("ISBN", bookISBN)).first();
+        if (bookDocument == null)
+        {
+            throw new RuntimeException("Book with ISBN " + bookISBN + " not found.");
+        }
+
+        Document newBookForAuthor = new Document()
+                .append("Title", bookDocument.getString("Title"))
+                .append("ISBN", bookDocument.getString("ISBN"))
+                .append("Genre", bookDocument.get("Genres"))
+                .append("Grade", bookDocument.getString("Grade"));
+
+        authorsCollection.updateOne(
+                eq("SSN", author.getSSN()),
+                new Document("$push", new Document("Books", newBookForAuthor))
+        );
+
+        Document newAuthorForBook = new Document()
+                .append("name", author.getName())
+                .append("SSN", author.getSSN());
+
+        booksCollection.updateOne(
+                eq("ISBN", bookISBN),
+                new Document("$push", new Document("Authors", newAuthorForBook))
+        );
     }
 
     private ArrayList<Book> getBookByQuery(String query, String category)
     {
-        /*{
-            "Title": ...,
-            "ISBN": ...,
-            "Genres": [...],
-            "Grade": ...,
-            "Authors": [
-            {
-                "name": ...,
-                "SSN": ...
-            },
-            ...
-            ]
-        },*/
-
         MongoCollection<Document> books = databaseConnection.getCollection("Books");
         Bson filter = Filters.regex(category, query, "i");
         FindIterable<Document> result = books.find(filter);
 
         ArrayList<Book> booksResult = new ArrayList<>();
-        for (Document book : result) {
+        for (Document book : result)
+        {
             String title = book.getString("Title");
             String isbn = book.getString("ISBN");
             List<String> genres = book.getList("Genres", String.class);
@@ -208,7 +270,8 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
             );
 
             List<Document> authorsArray = book.getList("Authors", Document.class);
-            for (Document author : authorsArray) {
+            for (Document author : authorsArray)
+            {
                 String authorName = author.getString("name");
                 String authorSSN = author.getString("SSN");
 

@@ -15,7 +15,6 @@ import se.kth.olof.beyar.labb.controller.*;
 import se.kth.olof.beyar.labb.model.*;
 import se.kth.olof.beyar.labb.protocol.DBServiceProtocol;
 import se.kth.olof.beyar.labb.view.*;
-import se.kth.olof.beyar.labb.model.NoSQLServiceProtocol;
 
 public class Main extends Application {
     public static void main(String[] args) {

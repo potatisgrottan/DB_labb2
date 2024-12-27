@@ -103,7 +103,7 @@ public class AddController
 
         try
         {
-            databaseService.insertBookTransaktion(book, authorSSN);
+            databaseService.insertBookUpdateAuthor(book, authorSSN);
         }
         catch (SQLException e)
         {
@@ -134,7 +134,7 @@ public class AddController
 
         try
         {
-            databaseService.insertAuthorTransaktion(author, bookISBN);
+            databaseService.insertAuthorUpdateBook(author, bookISBN);
         } catch (SQLException e)
         {
             throw new BooksDBException(e);
