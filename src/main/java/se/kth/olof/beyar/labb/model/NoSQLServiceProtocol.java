@@ -266,6 +266,9 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
             );
 
             List<Document> authorsArray = book.getList("Authors", Document.class);
+            if (authorsArray == null)
+                System.out.println("[ERROR] Book: " + newBook + " has no authors");
+
             for (Document author : authorsArray)
             {
                 String authorName = author.getString("name");
