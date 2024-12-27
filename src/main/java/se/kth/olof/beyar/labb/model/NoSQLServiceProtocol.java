@@ -6,7 +6,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import se.kth.olof.beyar.labb.protocol.DBServiceProtocol;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
