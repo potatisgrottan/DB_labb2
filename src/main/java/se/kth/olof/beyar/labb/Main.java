@@ -38,12 +38,12 @@ public class Main extends Application {
                 .serverApi(serverApi)
                 .build();
 
-        MongoClient mongoClient = MongoClients.create(settings);
-        MongoDatabase database = mongoClient.getDatabase("Library");
+        MongoClient client = MongoClients.create(settings);
+        MongoDatabase database = client.getDatabase("Library");
 
-        DBServiceProtocol databaseService = new NoSQLServiceProtocol(database);
+        DBServiceProtocol databaseService = new NoSQLServiceProtocol(database, client);
 
-        stage.setOnCloseRequest(_ -> mongoClient.close());
+        stage.setOnCloseRequest(_ -> client.close());
 
         NavbarModel navbarModel = new NavbarModel();
         NavbarView navbarView = new NavbarView();
