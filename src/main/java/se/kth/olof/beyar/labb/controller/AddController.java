@@ -106,6 +106,7 @@ public class AddController
             if (title.isEmpty() || genre.isEmpty() || isbn.isEmpty() || grade.isEmpty() || authorSSN.isEmpty())
                 return;
 
+            System.out.println("[DEBUG]" + isbn + ", " + title + ", " + genre + ", " + grade + ", " + authorSSN);
             databaseService.insertBookUpdateAuthor(book, authorSSN);
         }
         catch (SQLException e)
@@ -113,7 +114,6 @@ public class AddController
             throw new BooksDBException(e);
         }
 
-        System.out.println("[DEBUG]" + isbn + ", " + title + ", " + genre + ", " + grade + ", " + authorSSN);
     }
 
     public void readValuesFromAuthorDialog() throws BooksDBException

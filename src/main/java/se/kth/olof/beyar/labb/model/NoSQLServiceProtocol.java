@@ -40,7 +40,7 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
             for (Document bookDocument : booksDocuments) {
                 Book book = new Book(
                         bookDocument.getString("Title"),
-                        bookDocument.get("Genre").toString(),
+                        bookDocument.get("Genres").toString(),
                         bookDocument.getString("ISBN"),
                         bookDocument.getString("Grade")
                 );
@@ -112,7 +112,7 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
             booksDocuments.add(
                 new Document("Title", book.getTitle())
                         .append("ISBN", book.getIsbn())
-                        .append("Genre", book.getGenres())
+                        .append("Genres", book.getGenres())
                         .append("Grade", book.getGrade())
             );
         }
@@ -175,14 +175,16 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         MongoCollection<Document> authorsCollection = databaseConnection.getCollection("Authors");
 
         List<Document> authorsList = new ArrayList<>();
-        for (Author author : book.getAuthors())
-        {
-            authorsList.add(
-                    new Document()
-                            .append("name", author.getName())
-                            .append("SSN", author.getSSN())
-            );
-        }
+        Document author = authorsCollection.find(eq("SSN", authorSSN)).first();
+
+        if (author == null)
+            throw new IllegalStateException("No author found");
+
+        authorsList.add(
+                new Document()
+                        .append("name", author.getString("name"))
+                        .append("SSN", authorSSN)
+        );
 
         Document newBook = new Document()
                 .append("Title", book.getTitle())
@@ -190,15 +192,13 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
                 .append("Genres", Arrays.asList(book.getGenres().split(",")))
                 .append("Grade", book.getGrade())
                 .append("Authors", authorsList);
-
         booksCollection.insertOne(newBook);
 
         Document newBookForAuthor = new Document()
                 .append("Title", book.getTitle())
                 .append("ISBN", book.getIsbn())
-                .append("Genre", book.getGenres())
+                .append("Genres", book.getGenres())
                 .append("Grade", book.getGrade());
-
         authorsCollection.updateOne(
                 eq("SSN", authorSSN),
                 new Document("$push", new Document("Books", newBookForAuthor))
@@ -227,7 +227,7 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         Document newBookForAuthor = new Document()
                 .append("Title", bookDocument.getString("Title"))
                 .append("ISBN", bookDocument.getString("ISBN"))
-                .append("Genre", bookDocument.get("Genres"))
+                .append("Genres", bookDocument.get("Genres"))
                 .append("Grade", bookDocument.getString("Grade"));
 
         authorsCollection.updateOne(
