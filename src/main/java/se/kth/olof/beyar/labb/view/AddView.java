@@ -234,12 +234,12 @@ public class AddView
 
     public Button getAuthorDialogSaveButton()
     {
-        return (Button) ((HBox) authorDialog.getChildren().get(9)).getChildren().getFirst();
+        return (Button) ((HBox) authorDialog.getChildren().getLast()).getChildren().getFirst();
     }
 
     public Button getAuthorDialogCancelButton()
     {
-        return (Button) ((HBox) authorDialog.getChildren().get(9)).getChildren().get(1);
+        return (Button) ((HBox) authorDialog.getChildren().getLast()).getChildren().get(1);
     }
 
     public Button getConnectAuthorToBookDialogSave(){
