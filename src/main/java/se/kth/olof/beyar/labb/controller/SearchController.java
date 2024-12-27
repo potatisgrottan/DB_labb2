@@ -69,7 +69,7 @@ public class SearchController
     {
         StringBuilder response = new StringBuilder();
         books.forEach(book -> {
-            // System.out.println(book);
+
             response
                     .append("ISBN: ").append(book.getIsbn()).append("\n")
                     .append("Title: ").append(book.getTitle()).append("\n")
