@@ -40,7 +40,7 @@ public class Main extends Application {
         MongoClient client = MongoClients.create(settings);
         MongoDatabase database = client.getDatabase("Library");
 
-        DBServiceProtocol databaseService = new NoSQLServiceProtocol(database, client);
+        DBServiceProtocol databaseService = new NoSQLServiceProtocol(database);
 
         stage.setOnCloseRequest(_ -> client.close());
 

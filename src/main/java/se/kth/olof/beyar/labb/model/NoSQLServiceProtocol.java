@@ -16,12 +16,10 @@ import static com.mongodb.client.model.Filters.eq;
 public class NoSQLServiceProtocol implements DBServiceProtocol
 {
     MongoDatabase databaseConnection;
-    private final MongoClient client;
 
-    public NoSQLServiceProtocol(MongoDatabase databaseConnection, MongoClient client)
+    public NoSQLServiceProtocol(MongoDatabase databaseConnection)
     {
         this.databaseConnection = databaseConnection;
-        this.client = client;
     }
 
     @Override
@@ -133,7 +131,7 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         MongoCollection<Document> authors = databaseConnection.getCollection("Authors");
         Document author = authors.find(eq("SSN", authorSSN)).first();
 
-        Author newAuthor = null;
+        Author newAuthor;
         if (author != null)
         {
             newAuthor = new Author(author.getString("name"), authorSSN);
@@ -208,7 +206,7 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
     }
 
     @Override
-    public void insertAuthorUpdateBook(Author author, String bookISBN) throws SQLException
+    public void insertAuthorUpdateBook(Author author, String bookISBN)
     {
         MongoCollection<Document> authorsCollection = databaseConnection.getCollection("Authors");
         MongoCollection<Document> booksCollection = databaseConnection.getCollection("Books");
