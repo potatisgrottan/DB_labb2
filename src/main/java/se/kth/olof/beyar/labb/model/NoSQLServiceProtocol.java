@@ -12,15 +12,29 @@ import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
 
+/**
+ * Implementation of the NoSQL service protocol for MongoDB.
+ */
 public class NoSQLServiceProtocol implements DBServiceProtocol
 {
     MongoDatabase databaseConnection;
 
+    /**
+     * Constructs a NoSQLServiceProtocol with the specified database connection.
+     *
+     * @param databaseConnection the MongoDB database connection
+     */
     public NoSQLServiceProtocol(MongoDatabase databaseConnection)
     {
         this.databaseConnection = databaseConnection;
     }
 
+    /**
+     * Finds books by author name.
+     *
+     * @param query the author name query
+     * @return a list of books by the specified author
+     */
     @Override
     public ArrayList<Book> findByAuthor(String query)
     {
@@ -51,11 +65,24 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         return booksByAuthor;
     }
 
+    /**
+     * Finds books by ISBN.
+     *
+     * @param query the ISBN query
+     * @return a list of books with the specified ISBN
+     */
     @Override
     public ArrayList<Book> findByISBN(String query)
     {
         return getBookByQuery(query, "ISBN");
     }
+
+    /**
+     * Finds books by title.
+     *
+     * @param query the title query
+     * @return a list of books with the specified title
+     */
 
     @Override
     public ArrayList<Book> findByTitle(String query)
@@ -63,11 +90,25 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         return getBookByQuery(query, "Title");
     }
 
+    /**
+     * Finds books by genre.
+     *
+     * @param query the genre query
+     * @return a list of books with the specified genre
+     */
+
     @Override
     public ArrayList<Book> findByGenre(String query)
     {
         return getBookByQuery(query, "Genres");
     }
+
+    /**
+     * Finds books by rating.
+     *
+     * @param query the rating query
+     * @return a list of books with the specified rating
+     */
 
     @Override
     public ArrayList<Book> findByRating(String query)
@@ -75,6 +116,11 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         return getBookByQuery(query, "Grade");
     }
 
+    /**
+     * Inserts a new book document into the database.
+     *
+     * @param book the book to insert
+     */
     @Override
     public void insertBook(Book book)
     {
@@ -100,6 +146,11 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         books.insertOne(bookDocument);
     }
 
+    /**
+     * Inserts a new author document into the database.
+     *
+     * @param author the author to insert
+     */
     @Override
     public void insertAuthor(Author author)
     {
@@ -122,6 +173,13 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         authors.insertOne(authorInsert);
     }
 
+    /**
+     * Links a book to an author by updating their respective documents.
+     *
+     * @param bookISBN the ISBN of the book
+     * @param authorSSN the SSN of the author
+     * @throws IllegalStateException if the author is not found
+     */
     @Override
     public void insertWrittenBy(String bookISBN, String authorSSN) throws IllegalStateException
     {
@@ -160,6 +218,12 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         authors.updateOne(authorFilter, addBookToAuthorUpdate);
     }
 
+    /**
+     * Inserts an author and a book into the database.
+     *
+     * @param author the author to insert
+     * @param book the book to insert
+     */
     @Override
     public void insertBookByAuthor(Author author, Book book)
     {
@@ -167,6 +231,13 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         insertBook(book);
     }
 
+
+    /**
+     * Inserts a book and updates an author's document.
+     *
+     * @param book the book to insert
+     * @param authorSSN the SSN of the author to update
+     */
     @Override
     public void insertBookUpdateAuthor(Book book, String authorSSN)
     {
@@ -204,6 +275,13 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         );
     }
 
+    /**
+     * Inserts a new author and links them to an existing book.
+     *
+     * @param author The Author object to insert
+     * @param bookISBN The ISBN of the existing book to link
+     * @throws RuntimeException if the specified book is not found in the database
+     */
     @Override
     public void insertAuthorUpdateBook(Author author, String bookISBN)
     {
@@ -244,6 +322,13 @@ public class NoSQLServiceProtocol implements DBServiceProtocol
         );
     }
 
+    /**
+     * Helper method to perform generic book queries based on different criteria.
+     *
+     * @param query The search query string
+     * @param category The category to search in (e.g., "ISBN", "Title", "Genres", "Grade")
+     * @return ArrayList of Books matching the search criteria
+     */
     private ArrayList<Book> getBookByQuery(String query, String category)
     {
         MongoCollection<Document> books = databaseConnection.getCollection("Books");
